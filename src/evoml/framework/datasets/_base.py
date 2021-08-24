@@ -1,4 +1,4 @@
-from os import environ, listdir, makedirs
+from os import environ, listdir, makedirs, rmdir
 from os.path import dirname, expanduser, isdir, join, splitext, basename
 from typing import Tuple
 import pandas as pd
@@ -25,10 +25,11 @@ def clear_data_home(data_home=None):
 
 
 def split_dataset(src, dst=None, ratio=0.3, cluster=True):
-    """ split a dataset
+    """ divide a dataset into train and test sets
     """
     if (dst is None):
         dst = join(dirname(src), splitext(basename(src))[0]) 
+        shutil.rmtree(dst, ignore_errors=True)
         makedirs(dst, exist_ok=True)
 
     df = pd.read_csv(src)
