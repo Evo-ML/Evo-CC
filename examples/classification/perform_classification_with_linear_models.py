@@ -12,10 +12,7 @@ from EvoCluster import EvoCluster
 from evoml.framework import EvoCC
 from evoml.framework import datasets
 
-data_home = datasets.get_data_home(
-    "/Volumes/MyWorks/Workplace/Philadelphia University/Evo-CC/data/")
-
-datasets.split_dataset(os.path.join(data_home, "iris.csv"))
+data_home = datasets.get_data_home(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data')))
 
 optimizer = ["SSA"]
 objective_func = ["SSE"]
@@ -38,15 +35,17 @@ evocluster = EvoCluster(
     labels_exist=False
 )
 
-evocluster_folder = join(data_home, "iris")
-evocluster.run(evocluster_folder, evocluster_folder)
+datasets.split_dataset(os.path.join(data_home, "iris.csv"))
+input_of_evocluster = join(data_home, "iris")
+output_of_evocluster = join(data_home, "iris")
 
+evocluster.run(input_of_evocluster, output_of_evocluster)
 
 dataset_folder = join(data_home, "iris")
 
 evocc = EvoCC(optimizer,
               objective_func,
-              evocluster_folder,
+              output_of_evocluster,
               dataset_list,
               dataset=dataset_folder)
 evocc.run()
