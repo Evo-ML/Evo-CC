@@ -1,6 +1,7 @@
 # warnings.simplefilter(action='ignore')
 
 from posixpath import dirname, join
+from typing import Any
 import pandas as pd
 import numpy as np
 
@@ -11,29 +12,40 @@ from sklearn.linear_model import LinearRegression
 
 class EvoCC:
 
-    def __init__(self, optimizer, objective_func, evocluster_folder, dataset_list, dataset=None, algorithms=None):
-        
-        self.optimizer = optimizer
-        self.objective_func = objective_func
-        self.dataset_list = dataset_list
-        self.algorithms = algorithms
-        self.dataset = dataset
-        self.evocluster_folder = evocluster_folder
+    train_file = 'train.csv'
+    test_file = 'test.csv'
+
+    def __init__(self, **kwparameters):  
+        '''
+        we can apply ** to more than one argument in a function call.
+        ''' 
+        self.optimizer = kwparameters["evo_params"]["optimizer"]
+        self.objective_func = kwparameters["evo_params"]["objective_func"]
+        self.dataset_list = kwparameters["evo_params"]["dataset_list"]
+        if ('classifier' in kwparameters):
+            self.classifier = kwparameters["classifier"]
+        self.dataset = kwparameters["dataset"]
+        self.evo_folder = kwparameters["evo_folder"]
 
     def run(self):
-
+        
         np_dataset_train = np.genfromtxt(join(
-            self.dataset, 'train.csv'), delimiter=',', dtype=np.int32)
+            self.dataset, self.train_file), delimiter=',', dtype=np.int32)
+
         np_dataset_test = np.genfromtxt(join(
-            self.dataset, 'test.csv'), delimiter=',', dtype=np.int32)
+            self.dataset, self.test_file), delimiter=',', dtype=np.int32)
 
         n_train_instances = len(np_dataset_train)
+
         header_names = ['Dataset', 'Optimizer', 'objfname',
                         'k'] + ['label' + str(i) for i in range(n_train_instances)]
 
-        filename = join(self.evocluster_folder, "experiment_details_Labels.csv")
+        filename = join(self.evo_folder, "experiment_details_Labels.csv")
+
         n_train_instances = 105
+
         NumOfRuns = 1
+
         df = pd.read_csv(filename, names=header_names, dtype=object)[1:].iloc[:, 4:]
         df2 = pd.read_csv(filename, names=header_names, dtype=object)[1:].iloc[:, 3]
 
@@ -116,7 +128,9 @@ class EvoCC:
                 print('Score for cluster ' + str(i) + ' is: ' + str(score))
 
             average_score = sum_score / len(np_dataset_test)
+
             print('Aggregate accuracy: ' + str(average_score))
+
             results.append(all_y_true)
             results.append(all_y_pred)
             results.append(average_score)
