@@ -22,8 +22,10 @@ class EvoCC:
         self.optimizer = kwparameters["evo_params"]["optimizer"]
         self.objective_func = kwparameters["evo_params"]["objective_func"]
         self.dataset_list = kwparameters["evo_params"]["dataset_list"]
+
         if ('classifier' in kwparameters):
             self.classifier = kwparameters["classifier"]
+            
         self.dataset = kwparameters["dataset"]
         self.evo_folder = kwparameters["evo_folder"]
 
@@ -105,10 +107,7 @@ class EvoCC:
                 # get labels' values for testing instances of specific cluster
                 np_Y_test = np_test_cluster[:, -1]
 
-                #clf = make_pipeline(StandardScaler(), LinearSVC())#LinearSVC,SGDClassifier
-                #clf = RandomForestClassifier(random_state = randint(100, 10000))
-                clf = LinearRegression()
-                #clf = MLPRegressor()
+                clf = self.classifier
 
                 if len(np_X_test) == 0:
                     ratio = 0
