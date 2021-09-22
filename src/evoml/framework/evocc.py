@@ -1,13 +1,23 @@
 # warnings.simplefilter(action='ignore')
 
+from math import e
+import pathlib
 from posixpath import dirname, join
 from typing import Any
 import pandas as pd
 import numpy as np
+from pathlib import Path
+import shutil
+from os import environ, listdir, makedirs, rmdir
+import time
 
-from . import datasets
-from os import path
+
+from . import datasets, classification
+from os import getcwd, path
 from sklearn.linear_model import LinearRegression
+from . import utils
+
+from EvoCluster import EvoCluster
 
 
 class EvoCC:
@@ -15,48 +25,113 @@ class EvoCC:
     train_file = 'train.csv'
     test_file = 'test.csv'
 
-    def __init__(self, **kwparameters):  
+    def __init__(self, **kwparameters):
         '''
         we can apply ** to more than one argument in a function call.
-        ''' 
-        self.optimizer = kwparameters["evo_params"]["optimizer"]
-        self.objective_func = kwparameters["evo_params"]["objective_func"]
-        self.dataset_list = kwparameters["evo_params"]["dataset_list"]
+        '''
 
-        if ('classifier' in kwparameters):
-            self.classifier = kwparameters["classifier"]
-            
-        self.dataset = kwparameters["dataset"]
-        self.evo_folder = kwparameters["evo_folder"]
+    def __init__(self,
+                 num_of_runs,
+                 classifiers,
+                 cls_params,
+                 optimizer,
+                 objective_func,
+                 dataset_list,
+                 evocluster_params,
+                 auto_cluster: bool,
+                 n_clusters,
+                 metric
+                 ) -> None:
+
+        self.num_of_runs = num_of_runs
+        self.classifiers = classifiers
+        self.cls_params = cls_params
+        self.dataset_list = dataset_list
+        self.optimizer = optimizer
+        self.objective_func = objective_func
+        self.evocluster_params = evocluster_params
+        self.auto_cluster = auto_cluster
+        self.n_clusters = n_clusters
+        self.metric = metric
+
+    def _run_evo_cluster(self, optimizer, objective_func, dataset_list, evocluster_params, auto_cluster, n_clusters, metric):
+
+        # Choose your preferemces of exporting files
+        export_flags = {'Export_avg': True, 'Export_details': True, 'Export_details_labels': True,
+                        'Export_convergence': False, 'Export_boxplot': False}
+
+        evo_cluster = EvoCluster(
+            optimizer,
+            objective_func,
+            dataset_list,
+            1,
+            evocluster_params,
+            export_flags=export_flags,
+            auto_cluster=auto_cluster,
+            n_clusters=n_clusters,
+            metric=metric
+        )
+
+        # after running, it created a folder that contains results (called evo-folder)
+        # self.evo_folder = utils.get_latest_folder(getcwd())
+        self.evo_folder = time.strftime("%Y-%m-%d-%H-%M-%S")
+
+        # data preperation
+
+        self.folder_after_split_list = []
+        for dataset in self.dataset_list:
+
+            # prepate to split
+            dataset_file = path.join(datasets.get_data_home(), dataset + '.csv')
+            folder_after_split = path.join(self.evo_folder, dataset)
+            self.folder_after_split_list.append(folder_after_split)
+
+            # delete folder if it exists, then create new one
+            shutil.rmtree(folder_after_split, ignore_errors=True)
+            makedirs(folder_after_split, exist_ok=True)
+
+            # split a dateset into train and test sets
+            datasets.split_dataset(dataset_file, folder_after_split, cluster=True)
+
+        # run evocluster for each dataset
+        evo_cluster.run(path.join(Path(datasets.get_data_home()).parent, self.evo_folder),
+                        path.join(Path(datasets.get_data_home()).parent, self.evo_folder))
 
     def run(self):
-        
-        np_dataset_train = np.genfromtxt(join(
-            self.dataset, self.train_file), delimiter=',', dtype=np.int32)
+        # run evocluster and get results
+        self._run_evo_cluster(self.optimizer,
+                              self.objective_func,
+                              self.dataset_list,
+                              self.evocluster_params,
+                              self.auto_cluster,
+                              self.n_clusters,
+                              self.metric)
 
-        np_dataset_test = np.genfromtxt(join(
-            self.dataset, self.test_file), delimiter=',', dtype=np.int32)
+        # run evocc for each dataset
+        for id_of_data, dataset in enumerate(self.dataset_list):
+            print("=== " + dataset + " ===")
+            # self._run(dataset, self.folder_after_split_list[idx], "", "")
+            for id_of_cl, classifier in enumerate(self.classifiers):
+                self._run_classify(dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
 
-        n_train_instances = len(np_dataset_train)
-
-        header_names = ['Dataset', 'Optimizer', 'objfname',
-                        'k'] + ['label' + str(i) for i in range(n_train_instances)]
-
-        filename = join(self.evo_folder, "experiment_details_Labels.csv")
-
-        n_train_instances = 105
-
+    def _run_classify(self, dataset, folder_after_split, classifier, cls_param):
+        print(classifier, cls_param)
         NumOfRuns = 1
+        np_dataset_train = datasets.get_dataset(folder_after_split, self.train_file)
+        np_dataset_test = datasets.get_dataset(folder_after_split, self.test_file)
 
-        df = pd.read_csv(filename, names=header_names, dtype=object)[1:].iloc[:, 4:]
-        df2 = pd.read_csv(filename, names=header_names, dtype=object)[1:].iloc[:, 3]
+        train_instances = len(np_dataset_train)
+
+        df, df2 = datasets.get_data_frame_frome_experiment_details_by_dataset(
+            evo_folder=self.evo_folder, dataset=dataset)
+        df = df.iloc[:, :train_instances]
 
         #iterate through each experiment result (labels). Ex: PSO alg, SSE measure, fist run
 
         all_results = [0]*NumOfRuns
         for index, row in df.iterrows():
             k = int(df2.iloc[index-1])
-            results = [self.dataset_list[0],
+            results = [dataset,
                        self.optimizer[0], self.objective_func[0], k]
             np_labels_train = row.to_numpy().astype(int)
             centroids = np.zeros(k, dtype=object)
@@ -64,6 +139,7 @@ class EvoCC:
             print('Experiment ' + str(index))
 
             #iterate through each cluster generated to get appropriate testing instances for it
+            
             for i in range(k):
                 # get indices of specific cluster
                 train_indices = np.nonzero(np_labels_train == i)
@@ -107,7 +183,8 @@ class EvoCC:
                 # get labels' values for testing instances of specific cluster
                 np_Y_test = np_test_cluster[:, -1]
 
-                clf = self.classifier
+                # clf = LinearRegression()
+                clf = classification.get_classifer(classifier, cls_param)
 
                 if len(np_X_test) == 0:
                     ratio = 0
@@ -134,4 +211,4 @@ class EvoCC:
             results.append(all_y_pred)
             results.append(average_score)
             results.append(index)
-            all_results[index - 1] = results
+            # all_results[index - 1] = results
