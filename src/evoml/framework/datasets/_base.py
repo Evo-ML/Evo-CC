@@ -1,6 +1,6 @@
 from genericpath import exists
 from math import e
-from os import environ, listdir, makedirs, rmdir
+from os import environ, listdir, makedirs, rmdir, path
 from os.path import dirname, expanduser, isdir, join, splitext, basename
 from typing import Tuple
 import pandas as pd
@@ -9,6 +9,8 @@ from scipy.sparse import data
 from sklearn.model_selection import train_test_split
 import numpy as np
 from pathlib import Path
+
+from .. import datasets
 
 
 def _set_data_home(data_home=None):
@@ -115,6 +117,10 @@ def split_dataset(src, dst=None, ratio=0.3, cluster=False):
 
 
 def get_dataset(dataset_folder, data_file):
+
+    # dataset_folder = path.join(datasets.get_data_home(), dataset_folder)
+    # print("folder"+ dataset_folder)
+
     return np.genfromtxt(join(
         dataset_folder, data_file), delimiter=',', dtype=np.int32)
 
