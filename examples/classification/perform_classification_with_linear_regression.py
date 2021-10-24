@@ -22,7 +22,6 @@ objective_func = ["SSE", "TWCV"]
 #Select data sets from the list of available ones
 # dataset_list = ["iris"]
 # dataset_list = ["aniso"]
-
 dataset_list = ["aggregation", "aniso"]
 
 #Select general parameters for all optimizers (population size, number of iterations)

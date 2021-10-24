@@ -127,32 +127,47 @@ def get_dataset(dataset_folder, data_file):
 
 def get_data_frame_frome_experiment_details_by_dataset(evo_folder, dataset):
 
-    experiments_file = join(Path(evo_folder), "experiment_details_Labels.csv")
-
-    df = _get_df_with_different_columns(experiments_file)
+    experiment_details_Labels_file = join(Path(evo_folder), "experiment_details_Labels.csv")
+    
+    df = _get_df_with_different_columns(experiment_details_Labels_file)
 
     df = df.loc[df['Dataset'] == dataset]
 
     df = df.dropna(axis=1, how='all')
+
+    df0 = df.iloc[:,1:3]
     
     df1 = df.iloc[:, 4:]
     
     df2 = df.iloc[:, 3:4]
 
-    # re-index df1 (1, 2, 3...)
-    df1_index =[]
+    _re_index(df0)
+    _re_index(df1)
+    _re_index(df2)
 
-    for i in range(1, len(df1)+1):
-        df1_index.append(i)
-    df1.index = (df1_index)
+    # # re-index df1 (1, 2, 3...)
+    # df1_index =[]
 
-    # re-index df2 (1, 2, 3...)
-    df2_index =[]
-    for i in range(1, len(df2)+1):
-        df2_index.append(i)
-    df2.index = (df2_index)
+    # for i in range(1, len(df1)+1):
+    #     df1_index.append(i)
+    # df1.index = (df1_index)
+
+    # # re-index df2 (1, 2, 3...)
+    # df2_index =[]
+    # for i in range(1, len(df2)+1):
+    #     df2_index.append(i)
+    # df2.index = (df2_index)
     
-    return df1, df2
+    return df0, df1, df2
+
+def _re_index(df):
+    # re-index df (1, 2, 3...)
+    df_index =[]
+
+    for i in range(1, len(df)+1):
+        df_index.append(i)
+
+    df.index = (df_index)
 
 # def get_dataset_by_cluster(dataset, num_of_cluster):
 #     for i in range(num_of_cluster):

@@ -1,6 +1,7 @@
 # warnings.simplefilter(action='ignore')
 
 from math import e
+import math
 import pathlib
 from posixpath import dirname, join
 from typing import Any
@@ -20,6 +21,10 @@ from os import getcwd, path
 from . import utils
 
 from EvoCluster import EvoCluster
+
+import pandas as pd
+import csv
+import numpy
 
 
 class EvoCC:
@@ -119,12 +124,17 @@ class EvoCC:
                               self.metric)
 
         # run evocc for each dataset
+        final_results = []
         for id_of_data, dataset in enumerate(self.dataset_list):
             print("=== " + dataset + " ===")
             # self._run(dataset, self.folder_after_split_list[idx], "", "")
             for id_of_cl, classifier in enumerate(self.classifiers):
-                self._run_classify(
+                results = self._run_classify(
                     dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
+                for result in results:
+                    final_results.append(result)
+        
+        utils.write_results_to_csv(final_results, self.evo_folder)
 
     def _run_classify(self, dataset, folder_after_split, classifier, cls_param):
 
@@ -137,21 +147,37 @@ class EvoCC:
 
         train_instances = len(np_dataset_train)
 
-        df, df2 = datasets.get_data_frame_frome_experiment_details_by_dataset(
+        df0, df, df2 = datasets.get_data_frame_frome_experiment_details_by_dataset(
             evo_folder=self.evo_folder, dataset=dataset)
+
+        df.reset_index(inplace=True)
+        df2.reset_index(inplace=True)
+
         df = df.iloc[:, :train_instances]
+        # print(df)
+        # print(df2)
+        # print(df0)
 
         #iterate through each experiment result (labels). Ex: PSO alg, SSE measure, fist run
 
         # all_results = [0]*NumOfRuns
+        all_results = []
 
         for index, row in df.iterrows():
-            k = int(df2.iloc[index-1])
-            results = [dataset, classifier,
-                       self.optimizer[0],
-                       self.objective_func[0],
-                       k]
+        # for index in range(1, len(df)):
+
+            # print(index)
+
+            t = time.process_time()
+
+            k = int(df2.iloc[index]["k"])
+
+            objfname = df0.iloc[index]["objfname"]
+            optimizer = df0.iloc[index]["Optimizer"]
+            
+            results = [dataset, classifier, cls_param, optimizer, objfname, k]
             np_labels_train = row.to_numpy().astype(int)
+
             centroids = np.zeros(k, dtype=object)
             distinations = np.zeros(k, dtype=object)
             print('Experiment ' + str(index))
@@ -226,36 +252,46 @@ class EvoCC:
                     ratio = len(np_X_test) / len(np_dataset_test)
                     sum_score += score * len(np_X_test)
 
-                results.append(score)
-                results.append(ratio)
+                # results.append(score)
+                # results.append(ratio)
 
                 # print(metrics.classification_report(all_y_test, all_y_pred))
 
                 print('Score for cluster ' + str(i) + ' is: ' + str(score))
+            
+            executionTime = time.process_time()-t
+            results.append(executionTime)
 
             average_score = sum_score / len(np_dataset_test)
 
             print('Aggregate accuracy: ' + str(average_score))
 
+            # results.append(all_y_test)
+            # results.append(all_y_pred)
+
+            # confusion matrix
             TP, FP, FN, TN = metrics.get_confusion_matrix_values(all_y_test, all_y_pred)
-
-            results.append(all_y_test)
-            results.append(all_y_pred)
-            results.append(average_score)
-            # results.append(index)
-
             results.append(TP)
             results.append(FP)
             results.append(FN)
             results.append(TN)
 
+            results.append(average_score)
+
+            # g-mean
+            sensitivity = TP/(TP+FN)
+            specificity = TN/(FP+TN)
+            g_mean = math.sqrt(sensitivity*specificity)
+            results.append(g_mean)
+
+            # f1_score, precision and recall
             f1_score, precision, recall = metrics.evaluate_the_results(all_y_test, all_y_pred)
             results.append(f1_score)
             results.append(precision)
             results.append(recall)
 
-            # temp = np.array(results)
-            # np.savetxt('evocc_experiment_details.csv', temp, delimiter=',', fmt='%s')
-            print(results)
+            all_results.append(results)
 
-            # all_results[index - 1] = results
+            last = row
+        
+        return all_results
