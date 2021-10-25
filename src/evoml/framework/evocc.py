@@ -127,14 +127,19 @@ class EvoCC:
         final_results = []
         for id_of_data, dataset in enumerate(self.dataset_list):
             print("=== " + dataset + " ===")
-            # self._run(dataset, self.folder_after_split_list[idx], "", "")
-            for id_of_cl, classifier in enumerate(self.classifiers):
-                results = self._run_classify(
-                    dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
-                for result in results:
-                    final_results.append(result)
-        
+            for num in range(0, self.num_of_runs):
+                print("Run no.: " + str(num))
+                for id_of_cl, classifier in enumerate(self.classifiers):
+                    results = self._run_classify(
+                        dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
+                    for result in results:
+                        final_results.append(result)
+
         utils.write_results_to_csv(final_results, self.evo_folder)
+
+        ev_measures = ['g-mean', 'Accuracy']
+        utils.plot_boxplot_to_file(path.join(self.evo_folder, "evo"), self.optimizer,
+                                   self.objective_func, self.classifiers, self.dataset_list, ev_measures)
 
     def _run_classify(self, dataset, folder_after_split, classifier, cls_param):
 
@@ -164,7 +169,7 @@ class EvoCC:
         all_results = []
 
         for index, row in df.iterrows():
-        # for index in range(1, len(df)):
+            # for index in range(1, len(df)):
 
             # print(index)
 
@@ -174,7 +179,7 @@ class EvoCC:
 
             objfname = df0.iloc[index]["objfname"]
             optimizer = df0.iloc[index]["Optimizer"]
-            
+
             results = [dataset, classifier, cls_param, optimizer, objfname, k]
             np_labels_train = row.to_numpy().astype(int)
 
@@ -258,7 +263,7 @@ class EvoCC:
                 # print(metrics.classification_report(all_y_test, all_y_pred))
 
                 print('Score for cluster ' + str(i) + ' is: ' + str(score))
-            
+
             executionTime = time.process_time()-t
             results.append(executionTime)
 
@@ -285,13 +290,12 @@ class EvoCC:
             results.append(g_mean)
 
             # f1_score, precision and recall
-            f1_score, precision, recall = metrics.evaluate_the_results(all_y_test, all_y_pred)
+            f1_score, precision, recall = metrics.evaluate_the_results(
+                all_y_test, all_y_pred)
             results.append(f1_score)
             results.append(precision)
             results.append(recall)
 
             all_results.append(results)
 
-            last = row
-        
         return all_results

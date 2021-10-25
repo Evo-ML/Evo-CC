@@ -23,8 +23,8 @@ from evoml.framework import EvoCC
 ##EvoCluster parameters
 
 #Select optimizers from the list of available ones: "SSA","PSO","GA","BAT","FFA","GWO","WOA","MVO","MFO","CS".
-# optimizer = ["SSA", "PSO", "GA", "GWO"]
-optimizer = ["SSA"]
+optimizer = ["SSA", "PSO", "GA", "GWO"]
+# optimizer = ["SSA"]
 
 
 #Select objective function from the list of available ones:"SSE","TWCV","SC","DB","DI".
@@ -44,13 +44,15 @@ evocluseter_params = {'PopulationSize': 30, 'Iterations': 50}
 #EvoCC parameters
 
 #Select number of runs for the classification.
-num_of_runs = 2
+num_of_runs = 5
 
-classifiers = ['SVC', 'MLPClassifier']
+classifiers = ['LogisticRegression']
 
 classifiers_parameters = [
-    {'C': 1, 'degree': 3, 'gamma': 1000},
-    {'hidden_layer_sizes': 100, 'max_iter': 200}
+    # {'C': 1, 'degree': 3, 'gamma': 1000},
+    # {'hidden_layer_sizes': 100, 'max_iter': 200},
+    {},
+    # {},
 ]
 
 sol = EvoCC(
@@ -61,9 +63,9 @@ sol = EvoCC(
     objective_func,
     dataset_list,
     evocluseter_params,
-    auto_cluster=False,  # If False, specify a list of integers for n_clusters.
+    auto_cluster=True,  # If False, specify a list of integers for n_clusters.
     # string, or list, default = 'supervised' (don't use supervised)
-    n_clusters=[2,2],
+    n_clusters='supervised',
     metric='euclidean'  # It must be one of the options allowed by scipy.spatial.distance.pdist
 )
 
