@@ -9,11 +9,13 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import shutil
-from os import environ, listdir, makedirs, rmdir
+from os import environ, listdir, makedirs, remove, rmdir
 import time
 
-from sklearn import metrics
+from sklearn import metrics as sklearn_metrics
 from ..framework import metrics
+from imblearn.metrics import geometric_mean_score
+
 
 
 from . import datasets, classification
@@ -111,35 +113,85 @@ class EvoCC:
 
         # data preperation
 
-        self.folder_after_split_list = self._prepare_data_for_evo_cluster(
-            self.dataset_list, self.evo_folder)
+        # self.folder_after_split_list = self._prepare_data_for_evo_cluster(
+        #     self.dataset_list, self.evo_folder)
 
         # run evocluster and get results
-        self._run_evo_cluster(self.optimizer,
-                              self.objective_func,
-                              self.dataset_list,
-                              self.evocluster_params,
-                              self.auto_cluster,
-                              self.n_clusters,
-                              self.metric)
+        # self._run_evo_cluster(self.optimizer,
+        #                       self.objective_func,
+        #                       self.dataset_list,
+        #                       self.evocluster_params,
+        #                       self.auto_cluster,
+        #                       self.n_clusters,
+        #                       self.metric)
 
         # run evocc for each dataset
         final_results = []
-        for id_of_data, dataset in enumerate(self.dataset_list):
-            print("=== " + dataset + " ===")
-            for num in range(0, self.num_of_runs):
-                print("Run no.: " + str(num))
+
+        for num in range(0, self.num_of_runs):
+            print("Run no.: " + str(num))
+            # split datasets
+            self.folder_after_split_list = self._prepare_data_for_evo_cluster(
+                self.dataset_list, self.evo_folder)
+
+            # run evo-cluster
+            self._run_evo_cluster(self.optimizer,
+                                  self.objective_func,
+                                  self.dataset_list,
+                                  self.evocluster_params,
+                                  self.auto_cluster,
+                                  self.n_clusters,
+                                  self.metric)
+
+            # run evo-cc
+
+            for id_of_data, dataset in enumerate(self.dataset_list):
+                print("=== run evocc for " + dataset + " datasets ===")
                 for id_of_cl, classifier in enumerate(self.classifiers):
                     results = self._run_classify(
                         dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
                     for result in results:
                         final_results.append(result)
 
-        utils.write_results_to_csv(final_results, self.evo_folder)
+            # clear data
+            for dataset_folder in self.folder_after_split_list:
+                try:
+                    shutil.rmtree(dataset_folder)
+                    remove(dataset_folder+".csv")
+                except OSError as e:
+                    print("Error: %s - %s." % (e.filename, e.strerror))
+            try:
+                remove(path.join(self.evo_folder, "experiment.csv"))
+                remove(path.join(self.evo_folder, "experiment_details_Labels.csv"))
+                remove(path.join(self.evo_folder, "experiment_details.csv"))
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
 
+        utils.write_results_to_csv(final_results, self.evo_folder)
         ev_measures = ['g-mean', 'Accuracy']
-        utils.plot_boxplot_to_file(path.join(self.evo_folder, "evo"), self.optimizer,
+        utils.plot_boxplot_to_file(self.evo_folder, self.optimizer,
                                    self.objective_func, self.classifiers, self.dataset_list, ev_measures)
+        utils.write_average_to_csv(self.evo_folder, self.optimizer,
+                                   self.objective_func, self.classifiers, self.dataset_list)
+        
+        # utils.plot_convergence_to_file(self.evo_folder, self.optimizer,
+        #                            self.objective_func, self.dataset_list, self.classifiers, 50)
+
+        # for id_of_data, dataset in enumerate(self.dataset_list):
+        #     print("=== " + dataset + " ===")
+        #     for num in range(0, self.num_of_runs):
+        #         print("Run no.: " + str(num))
+        #         for id_of_cl, classifier in enumerate(self.classifiers):
+        #             results = self._run_classify(
+        #                 dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
+        #             for result in results:
+        #                 final_results.append(result)
+
+        # utils.write_results_to_csv(final_results, self.evo_folder)
+
+        # ev_measures = ['g-mean', 'Accuracy']
+        # utils.plot_boxplot_to_file(path.join(self.evo_folder, "evo"), self.optimizer,
+        #                            self.objective_func, self.classifiers, self.dataset_list, ev_measures)
 
     def _run_classify(self, dataset, folder_after_split, classifier, cls_param):
 
@@ -152,16 +204,20 @@ class EvoCC:
 
         train_instances = len(np_dataset_train)
 
-        df0, df, df2 = datasets.get_data_frame_frome_experiment_details_by_dataset(
+        df0, df, df2, iters_list = datasets.get_data_frame_frome_experiment_details_by_dataset(
             evo_folder=self.evo_folder, dataset=dataset)
 
         df.reset_index(inplace=True)
         df2.reset_index(inplace=True)
+        df0.reset_index(inplace=True)
+        iters_list.reset_index(inplace=True)
+        iters_list = iters_list.iloc[:,1:iters_list.shape[1]]
 
         df = df.iloc[:, :train_instances]
-        # print(df)
-        # print(df2)
-        # print(df0)
+        print(df)
+        print(df2)
+        print(df0)
+        print(iters_list)
 
         #iterate through each experiment result (labels). Ex: PSO alg, SSE measure, fist run
 
@@ -171,14 +227,19 @@ class EvoCC:
         for index, row in df.iterrows():
             # for index in range(1, len(df)):
 
-            # print(index)
+            print(index)
+            print(row)
 
             t = time.process_time()
 
             k = int(df2.iloc[index]["k"])
 
+            iters = iters_list.iloc[index].tolist()
+            print(iters)
+
             objfname = df0.iloc[index]["objfname"]
             optimizer = df0.iloc[index]["Optimizer"]
+            print(objfname, optimizer)
 
             results = [dataset, classifier, cls_param, optimizer, objfname, k]
             np_labels_train = row.to_numpy().astype(int)
@@ -266,6 +327,7 @@ class EvoCC:
 
             executionTime = time.process_time()-t
             results.append(executionTime)
+            
 
             average_score = sum_score / len(np_dataset_test)
 
@@ -275,18 +337,19 @@ class EvoCC:
             # results.append(all_y_pred)
 
             # confusion matrix
-            TP, FP, FN, TN = metrics.get_confusion_matrix_values(all_y_test, all_y_pred)
-            results.append(TP)
-            results.append(FP)
-            results.append(FN)
-            results.append(TN)
+            # TP, FP, FN, TN = metrics.get_confusion_matrix_values(all_y_test, all_y_pred)
+            # results.append(TP)
+            # results.append(FP)
+            # results.append(FN)
+            # results.append(TN)
+            results.append(metrics.get_confusion_matrix_values(all_y_test, all_y_pred))
 
             results.append(average_score)
 
             # g-mean
-            sensitivity = TP/(TP+FN)
-            specificity = TN/(FP+TN)
-            g_mean = math.sqrt(sensitivity*specificity)
+            # sensitivity = TP/(TP+FN)
+            # specificity = TN/(FP+TN)
+            g_mean = geometric_mean_score(all_y_test, all_y_pred)
             results.append(g_mean)
 
             # f1_score, precision and recall
@@ -295,7 +358,9 @@ class EvoCC:
             results.append(f1_score)
             results.append(precision)
             results.append(recall)
+            results.append(iters)
 
             all_results.append(results)
+            
 
         return all_results

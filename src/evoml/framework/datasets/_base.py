@@ -37,6 +37,32 @@ def _toense(data):
         X_test = X_test.toarray()
     return X_train, y_train, X_test, y_test
 
+def _read_experiment_details(data_file):
+    # Delimiter
+    data_file_delimiter = ','
+
+    # The max column count a line in the file could have
+    largest_column_count = 0
+
+    # Loop the data lines
+    with open(data_file, 'r') as temp_f:
+        # Read the lines
+        lines = temp_f.readlines()
+
+        for l in lines:
+            # Count the column count for the current line
+            column_count = len(l.split(data_file_delimiter)) + 1
+            
+            # Set the new most column count
+            largest_column_count = column_count if largest_column_count < column_count else largest_column_count
+
+    # Generate column names (will be 0, 1, 2, ..., largest_column_count - 1)
+
+    column_names = ['Dataset', 'Optimizer', 'objfname', 'k'] + ['Iter' + str(i) for i in range(0, largest_column_count-20)]
+
+    # Read csv
+    return pd.read_csv(data_file, header=None, delimiter=data_file_delimiter, names=column_names, dtype=object)[1:]
+
 
 def _get_df_with_different_columns(data_file):
 
@@ -106,7 +132,6 @@ def split_dataset(src, dst=None, ratio=0.3, cluster=False):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=ratio)
 
-    print(dst)
     pd.concat([X_train, y_train], axis=1).to_csv(
         join(dst, 'train.csv'), header=False, index=False)
     pd.concat([X_test, y_test], axis=1).to_csv(
@@ -128,6 +153,13 @@ def get_dataset(dataset_folder, data_file):
 def get_data_frame_frome_experiment_details_by_dataset(evo_folder, dataset):
 
     experiment_details_Labels_file = join(Path(evo_folder), "experiment_details_Labels.csv")
+    experiment_details_file = join(Path(evo_folder), "experiment_details.csv")
+
+    iters_df = _read_experiment_details(experiment_details_file)
+    print(iters_df)
+    iters_df = iters_df.iloc[:,5:]
+    print("ket qua moi")
+    print(iters_df)
     
     df = _get_df_with_different_columns(experiment_details_Labels_file)
 
@@ -142,23 +174,14 @@ def get_data_frame_frome_experiment_details_by_dataset(evo_folder, dataset):
     df2 = df.iloc[:, 3:4]
 
     _re_index(df0)
+
     _re_index(df1)
+
     _re_index(df2)
 
-    # # re-index df1 (1, 2, 3...)
-    # df1_index =[]
-
-    # for i in range(1, len(df1)+1):
-    #     df1_index.append(i)
-    # df1.index = (df1_index)
-
-    # # re-index df2 (1, 2, 3...)
-    # df2_index =[]
-    # for i in range(1, len(df2)+1):
-    #     df2_index.append(i)
-    # df2.index = (df2_index)
+    _re_index(iters_df)
     
-    return df0, df1, df2
+    return df0, df1, df2, iters_df
 
 def _re_index(df):
     # re-index df (1, 2, 3...)
@@ -168,18 +191,6 @@ def _re_index(df):
         df_index.append(i)
 
     df.index = (df_index)
-
-# def get_dataset_by_cluster(dataset, num_of_cluster):
-#     for i in range(num_of_cluster):
-#         # get indices of specific cluster
-#         indices = np.nonzero(dataset == i)
-#         # get training instances of specific cluster
-#         np_train_cluster = np_dataset_train[train_indices]
-#         # centroids for each cluster
-#         centroids[i] = np.mean(np_train_cluster[:, :-1], axis=0)
-#         # distances for each instance and a centroid
-#         distinations[i] = np.linalg.norm(
-#         np_dataset_test[:, :-1] - centroids[i], axis=1)
 
 
 

@@ -4,7 +4,7 @@ Created on Mon Aug 02 20:00:00 2021
 """
 import os
 from posixpath import join
-# from evoml.framework import datasets
+from evoml.framework import datasets
 
 # # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
@@ -16,15 +16,18 @@ from posixpath import join
 #     os.path.join(os.path.dirname(__file__), '../../data')))
 
 # # export EVOML_FRAMEWORK_DATA='../../data'
-# data_home = datasets.get_data_home()
+# datasets.get_data_home(os.path.join(os.getcwd(),"data"))
 
 from evoml.framework import EvoCC
+
+# myenv = os.environ.copy()
+# myenv['EVOML_FRAMEWORK_DATA'] = os.path.join(os.getcwd(),"data")
 
 ##EvoCluster parameters
 
 #Select optimizers from the list of available ones: "SSA","PSO","GA","BAT","FFA","GWO","WOA","MVO","MFO","CS".
-optimizer = ["SSA", "PSO", "GA", "GWO"]
-# optimizer = ["SSA"]
+# optimizer = ["SSA", "PSO", "GA", "GWO"]
+optimizer = ["SSA"]
 
 
 #Select objective function from the list of available ones:"SSE","TWCV","SC","DB","DI".
@@ -44,7 +47,7 @@ evocluseter_params = {'PopulationSize': 30, 'Iterations': 50}
 #EvoCC parameters
 
 #Select number of runs for the classification.
-num_of_runs = 5
+num_of_runs = 1
 
 classifiers = ['LogisticRegression']
 
