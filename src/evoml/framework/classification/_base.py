@@ -6,15 +6,22 @@ from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import linear_model
 
+names = [
+    "SVM",
+    "Linear SVM",
+    "SGDClassifier"
+    "Nearest Neighbors",
+    "Naive Bayes",
+]
 
 def get_classifer(classifier, params):
-    if "SVC" == classifier:
-        # Linear Kernel
+    if "Linear SVM" == classifier:
         return svm.SVC(C=params['C'], degree=params['degree'], gamma=params['gamma'])
+    elif "SVM" == classifier:
+        return svm.SVC(gamma=2, C=1)
     elif "MLPClassifier" == classifier:
         return MLPClassifier()
     elif "LinearRegression" == classifier:
-        # return linear_model.LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
         return linear_model.LinearRegression()
     elif "KNeighborsClassifier" == classifier:
         return KNeighborsClassifier(3)

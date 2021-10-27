@@ -9,64 +9,45 @@ Created on Mon Aug 02 20:00:00 2021
 # export EVOML_FRAMEWORK_DATA='your_path_to_data_home_folder'
 # set EVOML_FRAMEWORK_DATA='your_path_to_data_home_folder'
 
-from evoml.framework import EvoCC
+from EvoCluster import EvoCluster
 
 ##EvoCluster parameters
 
 #Select optimizers from the list of available ones: "SSA","PSO","GA","BAT","FFA","GWO","WOA","MVO","MFO","CS".
 # optimizer = ["SSA", "PSO", "GA", "GWO"]
-optimizer = ["SSA"]
+optimizer = ["PSO"]
+
+# optimizer = ["SSA"]
 
 #Select objective function from the list of available ones:"SSE","TWCV","SC","DB","DI".
-objective_func = ["SSE", "TWCV"]
-# objective_func = ["SSE"]
+# objective_func = ["SSE", "TWCV"]
+objective_func = ["SSE"]
 
 #Select data sets from the list of available ones
 # dataset_list = ["iris"]
 dataset_list = ["aggregation", "aniso"]
 
 #Select general parameters for all optimizers (population size, number of iterations)
-evocluseter_params = {'PopulationSize': 30, 'Iterations': 50}
+params = {'PopulationSize': 30, 'Iterations': 50}
 
 #EvoCC parameters
 #Select number of runs for the classification.
 num_of_runs = 3
 
-classifiers = ['LogisticRegression','MLPClassifier']
+export_flags = {'Export_avg': True, 'Export_details': True, 'Export_details_labels': True,
+                        'Export_convergence': False, 'Export_boxplot': False}
 
-classifiers_parameters = [
-    # {'C': 1, 'degree': 3, 'gamma': 1000},
-    # {'hidden_layer_sizes': 100, 'max_iter': 200},
-    {},
-    {},
-]
-
-sol = EvoCC(
-    num_of_runs,
-    classifiers,
-    classifiers_parameters,
+sol = EvoCluster(
     optimizer,
     objective_func,
     dataset_list,
-    evocluseter_params,
+    1,
+    params,
+    export_flags,
     auto_cluster=True,  # If False, specify a list of integers for n_clusters.
     # string, or list, default = 'supervised' (don't use supervised)
     n_clusters='supervised',
     metric='euclidean'  # It must be one of the options allowed by scipy.spatial.distance.pdist
 )
-
-# sol = EvoCC(
-#     num_of_runs,
-#     classifiers,
-#     classifiers_parameters,
-#     optimizer,
-#     objective_func,
-#     dataset_list,
-#     evocluseter_params,
-#     num_of_runs,
-#     auto_cluster=False,#If False, specify a list of integers for n_clusters.
-#     n_clusters=[2,7],#string, or list, default = 'supervised' (don't use supervised)
-#     metric='euclidean'#It must be one of the options allowed by scipy.spatial.distance.pdist
-# )
 
 sol.run()
