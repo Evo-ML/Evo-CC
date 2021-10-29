@@ -171,27 +171,11 @@ class EvoCC:
         ev_measures = ['g-mean', 'Accuracy']
         utils.plot_boxplot_to_file(self.evo_folder, self.optimizer,
                                    self.objective_func, self.classifiers, self.dataset_list, ev_measures)
-        utils.write_average_to_csv(self.evo_folder, self.optimizer,
-                                   self.objective_func, self.classifiers, self.dataset_list)
+        utils.write_average_to_csv(self.evo_folder, self.classifiers, self.optimizer,
+                                   self.objective_func, self.dataset_list)
         
-        # utils.plot_convergence_to_file(self.evo_folder, self.optimizer,
-        #                            self.objective_func, self.dataset_list, self.classifiers, 50)
-
-        # for id_of_data, dataset in enumerate(self.dataset_list):
-        #     print("=== " + dataset + " ===")
-        #     for num in range(0, self.num_of_runs):
-        #         print("Run no.: " + str(num))
-        #         for id_of_cl, classifier in enumerate(self.classifiers):
-        #             results = self._run_classify(
-        #                 dataset, self.folder_after_split_list[id_of_data], classifier, self.cls_params[id_of_cl])
-        #             for result in results:
-        #                 final_results.append(result)
-
-        # utils.write_results_to_csv(final_results, self.evo_folder)
-
-        # ev_measures = ['g-mean', 'Accuracy']
-        # utils.plot_boxplot_to_file(path.join(self.evo_folder, "evo"), self.optimizer,
-        #                            self.objective_func, self.classifiers, self.dataset_list, ev_measures)
+        utils.plot_convergence_to_file(self.evo_folder, self.optimizer,
+                                   self.objective_func, self.classifiers, self.dataset_list, self.evocluster_params["Iterations"])
 
     def _run_classify(self, dataset, folder_after_split, classifier, cls_param):
 

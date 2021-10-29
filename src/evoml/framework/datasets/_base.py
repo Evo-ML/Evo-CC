@@ -37,7 +37,7 @@ def _toense(data):
         X_test = X_test.toarray()
     return X_train, y_train, X_test, y_test
 
-def _read_experiment_details(data_file):
+def _read_experiment_details(data_file, column_names, prefix, offset):
     # Delimiter
     data_file_delimiter = ','
 
@@ -58,38 +58,38 @@ def _read_experiment_details(data_file):
 
     # Generate column names (will be 0, 1, 2, ..., largest_column_count - 1)
 
-    column_names = ['Dataset', 'Optimizer', 'objfname', 'k'] + ['Iter' + str(i) for i in range(0, largest_column_count-20)]
+    cl_names = column_names + [prefix + str(i) for i in range(0, largest_column_count-offset)]
 
     # Read csv
-    return pd.read_csv(data_file, header=None, delimiter=data_file_delimiter, names=column_names, dtype=object)[1:]
+    return pd.read_csv(data_file, header=None, delimiter=data_file_delimiter, names=cl_names, dtype=object)[1:]
 
 
-def _get_df_with_different_columns(data_file):
+# def _get_df_with_different_columns(data_file):
 
-    # Delimiter
-    data_file_delimiter = ','
+#     # Delimiter
+#     data_file_delimiter = ','
 
-    # The max column count a line in the file could have
-    largest_column_count = 0
+#     # The max column count a line in the file could have
+#     largest_column_count = 0
 
-    # Loop the data lines
-    with open(data_file, 'r') as temp_f:
-        # Read the lines
-        lines = temp_f.readlines()
+#     # Loop the data lines
+#     with open(data_file, 'r') as temp_f:
+#         # Read the lines
+#         lines = temp_f.readlines()
 
-        for l in lines:
-            # Count the column count for the current line
-            column_count = len(l.split(data_file_delimiter)) + 1
+#         for l in lines:
+#             # Count the column count for the current line
+#             column_count = len(l.split(data_file_delimiter)) + 1
             
-            # Set the new most column count
-            largest_column_count = column_count if largest_column_count < column_count else largest_column_count
+#             # Set the new most column count
+#             largest_column_count = column_count if largest_column_count < column_count else largest_column_count
 
-    # Generate column names (will be 0, 1, 2, ..., largest_column_count - 1)
+#     # Generate column names (will be 0, 1, 2, ..., largest_column_count - 1)
 
-    column_names = ['Dataset', 'Optimizer', 'objfname', 'k'] + ['label' + str(i) for i in range(0, largest_column_count-4)]
+#     column_names = ['Dataset', 'Optimizer', 'objfname', 'k'] + ['label' + str(i) for i in range(0, largest_column_count-4)]
 
-    # Read csv
-    return pd.read_csv(data_file, header=None, delimiter=data_file_delimiter, names=column_names, dtype=object)[1:]
+#     # Read csv
+#     return pd.read_csv(data_file, header=None, delimiter=data_file_delimiter, names=column_names, dtype=object)[1:]
 
 
 def load_dataset(name):
@@ -155,17 +155,16 @@ def get_data_frame_frome_experiment_details_by_dataset(evo_folder, dataset):
     experiment_details_Labels_file = join(Path(evo_folder), "experiment_details_Labels.csv")
     experiment_details_file = join(Path(evo_folder), "experiment_details.csv")
 
-    iters_df = _read_experiment_details(experiment_details_file)
-    print(iters_df)
-    iters_df = iters_df.iloc[:,5:]
-    print("ket qua moi")
-    print(iters_df)
+    iterations = _read_experiment_details(experiment_details_file, ["Dataset","Optimizer","objfname","k","ExecutionTime","SSE","Purity","Entropy","HS","CS","VM","AMI","ARI","Fmeasure","TWCV","SC","Accuracy","DI","DB","STDev"], "Iter", 20)
+    iterations = iterations.loc[iterations['Dataset'] == dataset]
+    iterations = iterations.iloc[:,20:]
     
-    df = _get_df_with_different_columns(experiment_details_Labels_file)
+    df = _read_experiment_details(experiment_details_Labels_file, ['Dataset', 'Optimizer', 'objfname', 'k'],"label", 4)
 
     df = df.loc[df['Dataset'] == dataset]
 
     df = df.dropna(axis=1, how='all')
+    iterations = iterations.dropna(axis=1, how='all')
 
     df0 = df.iloc[:,1:3]
     
@@ -179,16 +178,18 @@ def get_data_frame_frome_experiment_details_by_dataset(evo_folder, dataset):
 
     _re_index(df2)
 
-    _re_index(iters_df)
+    _re_index(iterations)
+
+    print(iterations)
     
-    return df0, df1, df2, iters_df
+    return df0, df1, df2, iterations
 
 def _re_index(df):
     # re-index df (1, 2, 3...)
     df_index =[]
 
-    for i in range(1, len(df)+1):
-        df_index.append(i)
+    for i in range(0, len(df)):
+        df_index.append(i+1)
 
     df.index = (df_index)
 

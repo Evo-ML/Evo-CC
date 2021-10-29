@@ -4,7 +4,9 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
+from sklearn.tree import DecisionTreeClassifier
 from sklearn import linear_model
+from sklearn.naive_bayes import GaussianNB
 
 names = [
     "SVM",
@@ -12,6 +14,7 @@ names = [
     "SGDClassifier"
     "Nearest Neighbors",
     "Naive Bayes",
+    "DecisionTreeClassifier"
 ]
 
 def get_classifer(classifier, params):
@@ -27,6 +30,10 @@ def get_classifer(classifier, params):
         return KNeighborsClassifier(3)
     elif "GaussianProcessClassifier" == classifier:
         return GaussianProcessClassifier(1.0 * RBF(1.0))
+    elif "DecisionTreeClassifier" == classifier:
+        return DecisionTreeClassifier(random_state=0)
+    elif "Naive Bayes" == classifier:
+        return GaussianNB()
     elif "LogisticRegression" == classifier:
         return linear_model.LogisticRegression(C=10, penalty='l1',
                                   solver='saga',

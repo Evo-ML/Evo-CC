@@ -13,11 +13,11 @@ import pandas as pd
 import numpy as np
 import time
 import logging
-
-from ..constant import headers
+from ast import literal_eval
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+
 
 def get_latest_folder(directory):
     latest_file = max(glob.glob(path.join(directory, '*/')), key=path.getmtime)
@@ -37,7 +37,7 @@ def benchmark(func):
     return wrapper
 
 
-def write_average_to_csv(results_directory, optimizers, objective_funcs, classifiers, dataset_list):
+def write_average_to_csv(results_directory, classifiers, optimizers, objective_funcs, dataset_list):
     """ The function allows writing average of benchmark results to a csv file.
     """
     details_data_from_file_results = pd.read_csv(results_directory + '/experiment.csv')
@@ -60,17 +60,19 @@ def write_average_to_csv(results_directory, optimizers, objective_funcs, classif
                                                                   & (details_data_from_file_results["Optimizer"] == optimizer_name)
                                                                   & (details_data_from_file_results["objfname"] == objective_name)
                                                                   & (details_data_from_file_results["classifier"] == classifier)]
-
+                    n_clusters = detailedData["k"].iloc[0]
                     accuracy_list = np.array(detailedData["Accuracy"]).T.tolist()
                     g_mean_list = np.array(detailedData["g-mean"]).T.tolist()
+                    f1_score_list = detailedData["f1_score"]
+                    print((f1_score_list.values.astype(list)))
+                    # print((np.array(f1_score_list)))
 
-                    dic_data = [dataset_list[d], optimizer_name, objective_name,
-                                classifier, average(accuracy_list), average(g_mean_list)]
+                    dic_data = [dataset_list[d], classifier, optimizer_name, objective_name,
+                                n_clusters, average(accuracy_list), average(g_mean_list)]
                     ret_data.append(dic_data)
 
     # headers of the output file
-    headers_of_csv_file = ["Dataset", "classifier", "classifier_parameters",
-                           "Optimizer", "objfname", "Accuracy", "g-mean"]
+    headers_of_csv_file = ["Dataset", "classifier", "Optimizer", "objfname", "k", "Accuracy", "g-mean"]
     average_file = path.join(results_directory, "average.csv")
     write_to_csv_from_list(headers_of_csv_file, ret_data, average_file)
 
@@ -112,7 +114,9 @@ def plot_boxplot_to_file(results_directory, optimizer, objectivefunc, classifier
 
                     # , notch=True
 
-                    print(data)
+                    logging.debug(data)
+
+                    plt.xticks(rotation=45)
 
                     box = plt.boxplot(data, patch_artist=True, labels=classifiers)
 
@@ -123,12 +127,13 @@ def plot_boxplot_to_file(results_directory, optimizer, objectivefunc, classifier
                         patch.set_facecolor(color)
 
                     plt.legend(handles=box['boxes'], labels=classifiers,
-                               loc="upper right", bbox_to_anchor=(1.2, 1.02))
+                               loc="upper left", bbox_to_anchor=(1.2, 1.02))
                     fig_name = results_directory + "/boxplot-" + \
                         dataset_List[d] + "-" + objective_name + "-" + \
                         optimizer_name + "-"+ev_measures[z] + ".png"
                     plt.savefig(fig_name, bbox_inches='tight')
                     plt.clf()
+
 
 def plot_convergence_to_file(results_directory, optimizers, objective_funcs, classifiers, dataset_list, iterations):
     """ Plot convergence graph and save to a PNG file
@@ -147,20 +152,22 @@ def plot_convergence_to_file(results_directory, optimizers, objective_funcs, cla
             if 'SSA' in optimizers:
                 start = 1
             all_generations = [x+1 for x in range(start, iterations)]
-            
+
             for k in range(n_classifiers):
                 classifier_name = classifiers[k]
                 temp_lst = []
 
                 for i in range(n_optimizers):
                     optimizer_name = optimizers[i]
+                    print(dataset_list[d], optimizer_name, objective_name, classifier_name)
                     file_results_data = file_results_data[[
                         'Dataset', 'Optimizer', 'objfname', 'classifier', 'iters']]
                     rows = file_results_data[(file_results_data["Dataset"] == dataset_list[d])
-                                            & (file_results_data["Optimizer"] == optimizer_name)
-                                            & (file_results_data["objfname"] == objective_name)
-                                            & (file_results_data["classifier"] == classifier_name)
-                                            ]
+                                             & (file_results_data["Optimizer"] == optimizer_name)
+                                             & (file_results_data["objfname"] == objective_name)
+                                             & (file_results_data["classifier"] == classifier_name)
+                                             ]
+                    logging.debug(rows)
                     rows.reset_index(inplace=True)
                     rows = rows["iters"]
 
@@ -169,24 +176,29 @@ def plot_convergence_to_file(results_directory, optimizers, objective_funcs, cla
                     list_avg_of_fitness_grb_opt = []
 
                     for index, row in rows.iteritems():
-                        list_avg_of_fitness_grb_opt.append(np.array(ast.literal_eval(row), dtype=float))
+                        print(row)
+                        list_avg_of_fitness_grb_opt.append(
+                            np.array(ast.literal_eval(row), dtype=float))
 
                     avg = np.matrix(list_avg_of_fitness_grb_opt).mean(0).tolist()[0]
-                    avg.pop(start)
+                    if start == 1:
+                        avg = np.delete(avg, 0)
                     temp_lst.append(avg)
 
                 logging.debug(temp_lst)
 
-                plt.plot(all_generations, np.matrix(temp_lst).transpose(), label=optimizers)
+                plt.plot(all_generations, np.matrix(
+                    temp_lst).transpose(), label=optimizers)
 
                 plt.xlabel('Iterations')
                 plt.ylabel('Fitness')
-                plt.legend(loc="upper right", bbox_to_anchor=(1.2,1.02))
+                plt.legend(loc="upper right", bbox_to_anchor=(1.2, 1.02))
                 plt.grid()
-                fig_name = results_directory + "/convergence-" + dataset_list[d] + "-" + classifier_name +  "-" + objective_name + ".png"
+                fig_name = results_directory + "/convergence-" + \
+                    dataset_list[d] + "-" + classifier_name + \
+                    "-" + objective_name + ".png"
                 plt.savefig(fig_name, bbox_inches='tight')
                 plt.clf()
-
 
 
 def write_to_csv_from_list(headers, lst, to__file):
@@ -197,6 +209,7 @@ def write_to_csv_from_list(headers, lst, to__file):
         for result in lst:
             writer_details.writerow(result)
     out_details.close()
+
 
 def average(lst):
     return sum(lst) / len(lst)
