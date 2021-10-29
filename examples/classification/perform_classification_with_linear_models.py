@@ -15,10 +15,8 @@ from evoml.framework import EvoCC
 
 #Select optimizers from the list of available ones: "SSA","PSO","GA","BAT","FFA","GWO","WOA","MVO","MFO","CS".
 optimizer = ["FFA", "PSO", "GA", "GWO"]
-# optimizer = ["SSA", "GWO"]
 
 #Select objective function from the list of available ones:"SSE","TWCV","SC","DB","DI".
-# objective_func = ["SSE", "TWCV"]
 objective_func = ["SSE"]
 
 #Select data sets from the list of available ones
@@ -35,7 +33,6 @@ num_of_runs = 10
 # classifiers = ['LogisticRegression','MLPClassifier']
 
 classifiers = ["Naive Bayes", "DecisionTreeClassifier", "LinearRegression", "MLPClassifier"]
-# classifiers = ["SVM"]
 
 # classifiers = ["SVM", "KNeighborsClassifier", "Naive Bayes", "DecisionTreeClassifier"]
 
@@ -54,24 +51,9 @@ sol = EvoCC(
     objective_func,
     dataset_list,
     evocluseter_params,
-    auto_cluster=True,  # If False, specify a list of integers for n_clusters.
+    auto_cluster=False,  # If False, specify a list of integers for n_clusters.
     # string, or list, default = 'supervised' (don't use supervised)
-    n_clusters='supervised',
+    n_clusters=[7,3,2],
     metric='euclidean'  # It must be one of the options allowed by scipy.spatial.distance.pdist
 )
-
-# sol = EvoCC(
-#     num_of_runs,
-#     classifiers,
-#     classifiers_parameters,
-#     optimizer,
-#     objective_func,
-#     dataset_list,
-#     evocluseter_params,
-#     num_of_runs,
-#     auto_cluster=False,#If False, specify a list of integers for n_clusters.
-#     n_clusters=[2,7],#string, or list, default = 'supervised' (don't use supervised)
-#     metric='euclidean'#It must be one of the options allowed by scipy.spatial.distance.pdist
-# )
-
 sol.run()
