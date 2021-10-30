@@ -28,7 +28,7 @@ evocluseter_params = {'PopulationSize': 50, 'Iterations': 100}
 
 #EvoCC parameters
 #Select number of runs for the classification.
-num_of_runs = 10
+num_of_runs = 2
 
 # classifiers = ['LogisticRegression','MLPClassifier']
 

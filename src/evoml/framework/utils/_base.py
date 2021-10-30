@@ -207,8 +207,7 @@ def plot_convergence_to_file(results_directory, optimizers, objective_funcs, cla
                 plt.legend(loc="upper right", bbox_to_anchor=(1.2, 1.02))
                 plt.grid()
                 fig_name = results_directory + "/convergence-" + \
-                    dataset_list[d] + "-" + \
-                    "-" + objective_name + ".png"
+                    dataset_list[d] + "-" + objective_name + ".png"
                 plt.savefig(fig_name, bbox_inches='tight')
                 plt.clf()
                 break
