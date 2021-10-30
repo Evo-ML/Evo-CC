@@ -37,7 +37,7 @@ def benchmark(func):
     return wrapper
 
 
-def write_average_to_csv(results_directory, classifiers, optimizers, objective_funcs, dataset_list):
+def write_average_to_csv(results_directory, classifiers, classifier_parameters, optimizers, objective_funcs, dataset_list):
     """ The function allows writing average of benchmark results to a csv file.
     """
     details_data_from_file_results = pd.read_csv(results_directory + '/experiment.csv')
@@ -56,11 +56,13 @@ def write_average_to_csv(results_directory, classifiers, optimizers, objective_f
                     objective_name = objective_funcs[j]
                     optimizer_name = optimizers[i]
                     classifier = classifiers[k]
+                    classifier_parameter = classifier_parameters[k]
                     detailedData = details_data_from_file_results[(details_data_from_file_results["Dataset"] == dataset_list[d])
                                                                   & (details_data_from_file_results["Optimizer"] == optimizer_name)
                                                                   & (details_data_from_file_results["objfname"] == objective_name)
                                                                   & (details_data_from_file_results["classifier"] == classifier)]
                     n_clusters = detailedData["k"].iloc[0]
+                    execution_time_list = np.array(detailedData["ExecutionTime"]).T.tolist()
                     accuracy_list = np.array(detailedData["Accuracy"]).T.tolist()
                     g_mean_list = np.array(detailedData["g-mean"]).T.tolist()
                     f1_score_list = detailedData["f1_score"]
@@ -71,9 +73,11 @@ def write_average_to_csv(results_directory, classifiers, optimizers, objective_f
 
                     dic_data = [dataset_list[d],
                                 classifier,
+                                classifier_parameter,
                                 optimizer_name,
                                 objective_name,
                                 n_clusters,
+                                average(execution_time_list),
                                 average(accuracy_list),
                                 average(g_mean_list),
                                 average_of_matrix(f1_score_list),
@@ -85,8 +89,8 @@ def write_average_to_csv(results_directory, classifiers, optimizers, objective_f
                     ret_data.append(dic_data)
 
     # headers of the output file
-    headers_of_csv_file = ["Dataset", "classifier", "Optimizer", "objfname",
-                           "k", "Accuracy", "g-mean", "f1_score", "precision", "recall", "iters"]
+    headers_of_csv_file = ["Dataset", "classifier", "classifier_parameter", "Optimizer", "objfname",
+                           "k", "ExecutionTime", "Accuracy", "g-mean", "f1_score", "precision", "recall", "iters"]
     average_file = path.join(results_directory, "average.csv")
     write_to_csv_from_list(headers_of_csv_file, ret_data, average_file)
 

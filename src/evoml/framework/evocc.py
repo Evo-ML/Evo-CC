@@ -171,7 +171,7 @@ class EvoCC:
         ev_measures = ['g-mean', 'Accuracy']
         utils.plot_boxplot_to_file(self.evo_folder, self.optimizer,
                                    self.objective_func, self.classifiers, self.dataset_list, ev_measures)
-        utils.write_average_to_csv(self.evo_folder, self.classifiers, self.optimizer,
+        utils.write_average_to_csv(self.evo_folder, self.classifiers, self.cls_params, self.optimizer,
                                    self.objective_func, self.dataset_list)
         
         utils.plot_convergence_to_file(self.evo_folder, self.optimizer,

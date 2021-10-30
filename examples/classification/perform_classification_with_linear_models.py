@@ -14,7 +14,9 @@ from evoml.framework import EvoCC
 ##EvoCluster parameters
 
 #Select optimizers from the list of available ones: "SSA","PSO","GA","BAT","FFA","GWO","WOA","MVO","MFO","CS".
-optimizer = ["FFA", "PSO", "GA", "GWO"]
+# optimizer = ["FFA", "PSO", "GA", "GWO"]
+optimizer = ["FFA"]
+
 
 #Select objective function from the list of available ones:"SSE","TWCV","SC","DB","DI".
 objective_func = ["SSE"]
@@ -24,7 +26,7 @@ objective_func = ["SSE"]
 dataset_list = ["aggregation", "iris", "flame"]
 
 #Select general parameters for all optimizers (population size, number of iterations)
-evocluseter_params = {'PopulationSize': 50, 'Iterations': 100}
+evocluseter_params = {'PopulationSize': 50, 'Iterations': 10}
 
 #EvoCC parameters
 #Select number of runs for the classification.
