@@ -66,6 +66,8 @@ def write_average_to_csv(results_directory, classifiers, optimizers, objective_f
                     f1_score_list = detailedData["f1_score"]
                     precision_list = detailedData["precision"]
                     recall_list = detailedData["recall"]
+                    iters_list = detailedData["iters"]
+                    # print(average_of_matrix(iters_list))
 
                     dic_data = [dataset_list[d],
                                 classifier,
@@ -77,13 +79,14 @@ def write_average_to_csv(results_directory, classifiers, optimizers, objective_f
                                 average_of_matrix(f1_score_list),
                                 average_of_matrix(precision_list),
                                 average_of_matrix(recall_list),
+                                average_of_matrix(iters_list)
                                 ]
-                                
+
                     ret_data.append(dic_data)
 
     # headers of the output file
     headers_of_csv_file = ["Dataset", "classifier", "Optimizer", "objfname",
-                           "k", "Accuracy", "g-mean", "f1_score", "precision", "recall"]
+                           "k", "Accuracy", "g-mean", "f1_score", "precision", "recall", "iters"]
     average_file = path.join(results_directory, "average.csv")
     write_to_csv_from_list(headers_of_csv_file, ret_data, average_file)
 
@@ -169,8 +172,8 @@ def plot_convergence_to_file(results_directory, optimizers, objective_funcs, cla
                 temp_lst = []
                 for i in range(n_optimizers):
                     optimizer_name = optimizers[i]
-                    print(dataset_list[d], optimizer_name,
-                          objective_name, classifier_name)
+                    # print(dataset_list[d], optimizer_name,
+                    #       objective_name, classifier_name)
                     file_results_data = file_results_data[[
                         'Dataset', 'Optimizer', 'objfname', 'classifier', 'iters']]
                     rows = file_results_data[(file_results_data["Dataset"] == dataset_list[d])
@@ -185,7 +188,7 @@ def plot_convergence_to_file(results_directory, optimizers, objective_funcs, cla
                     list_avg_of_fitness_grb_opt = []
 
                     for index, row in rows.iteritems():
-                        print(row)
+                        logging.debug(row)
                         list_avg_of_fitness_grb_opt.append(
                             np.array(ast.literal_eval(row), dtype=float))
 
@@ -204,10 +207,11 @@ def plot_convergence_to_file(results_directory, optimizers, objective_funcs, cla
                 plt.legend(loc="upper right", bbox_to_anchor=(1.2, 1.02))
                 plt.grid()
                 fig_name = results_directory + "/convergence-" + \
-                    dataset_list[d] + "-" + classifier_name + \
+                    dataset_list[d] + "-" + \
                     "-" + objective_name + ".png"
                 plt.savefig(fig_name, bbox_inches='tight')
                 plt.clf()
+                break
 
 
 def write_to_csv_from_list(headers, lst, to__file):
@@ -231,8 +235,9 @@ def average_of_matrix(matrix):
     temp = []
 
     for value in np.ndenumerate(matrix.values):
+        # row = ast.literal_eval(value[1])
         temp.append(ast.literal_eval(value[1]))
 
-    avg = np.array(temp).mean(axis=0)
+    avg = np.array(temp).astype(float).mean(axis=0)
 
     return avg.tolist()
