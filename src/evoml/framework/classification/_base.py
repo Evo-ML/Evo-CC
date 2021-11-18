@@ -7,19 +7,21 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import linear_model
 from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.linear_model import SGDClassifier
 
-names = [
-    "SVM",
-    "Linear SVM",
-    "SGDClassifier"
-    "Nearest Neighbors",
-    "Naive Bayes",
-    "DecisionTreeClassifier"
-]
+# names = [
+#     "SVM",
+#     "Linear SVM",
+#     "SGDClassifier"
+#     "Nearest Neighbors",
+#     "Naive Bayes",
+#     "DecisionTreeClassifier"
+# ]
 
 def get_classifer(classifier, params):
-    if "Linear SVM" == classifier:
-        return svm.SVC(C=params['C'], degree=params['degree'], gamma=params['gamma'])
+    if "LinearSVC" == classifier:
+        return svm.LinearSVC()
     elif "SVM" == classifier:
         return svm.SVC(gamma=2, C=1)
     elif "MLPClassifier" == classifier:
@@ -32,10 +34,14 @@ def get_classifer(classifier, params):
         return GaussianProcessClassifier(1.0 * RBF(1.0))
     elif "DecisionTreeClassifier" == classifier:
         return DecisionTreeClassifier(random_state=0)
-    elif "Naive Bayes" == classifier:
+    elif "GaussianNB" == classifier:
         return GaussianNB()
     elif "LogisticRegression" == classifier:
         return linear_model.LogisticRegression(C=10, penalty='l1',
                                   solver='saga',
                                   multi_class='multinomial',
                                   max_iter=10000)
+    elif "AdaBoostClassifier" == classifier:
+        return AdaBoostClassifier()
+    elif "SGDClassifier" == classifier:
+        return SGDClassifier()
