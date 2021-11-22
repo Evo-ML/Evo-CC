@@ -1,4 +1,5 @@
 # Author: Anh Dang
+from typing import Any
 from sklearn import svm
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -19,29 +20,27 @@ from sklearn.linear_model import SGDClassifier
 #     "DecisionTreeClassifier"
 # ]
 
-def get_classifer(classifier, params):
+
+def get_classifer(classifier, kwargs: Any):
     if "LinearSVC" == classifier:
-        return svm.LinearSVC()
+        return svm.LinearSVC().set_params(**kwargs)
     elif "SVM" == classifier:
-        return svm.SVC(gamma=2, C=1)
+        return svm.SVC().set_params(**kwargs)
     elif "MLPClassifier" == classifier:
         return MLPClassifier()
     elif "LinearRegression" == classifier:
-        return linear_model.LinearRegression()
+        return linear_model.LinearRegression().set_params(**kwargs)
     elif "KNeighborsClassifier" == classifier:
-        return KNeighborsClassifier(3)
+        return KNeighborsClassifier().set_params(**kwargs)
     elif "GaussianProcessClassifier" == classifier:
-        return GaussianProcessClassifier(1.0 * RBF(1.0))
+        return GaussianProcessClassifier().set_params(**kwargs)
     elif "DecisionTreeClassifier" == classifier:
-        return DecisionTreeClassifier(random_state=0)
+        return DecisionTreeClassifier().set_params(**kwargs)
     elif "GaussianNB" == classifier:
         return GaussianNB()
     elif "LogisticRegression" == classifier:
-        return linear_model.LogisticRegression(C=10, penalty='l1',
-                                  solver='saga',
-                                  multi_class='multinomial',
-                                  max_iter=10000)
+        return linear_model.LogisticRegression().set_params(**kwargs)
     elif "AdaBoostClassifier" == classifier:
-        return AdaBoostClassifier()
+        return AdaBoostClassifier().set_params(**kwargs)
     elif "SGDClassifier" == classifier:
-        return SGDClassifier()
+        return SGDClassifier().set_params(**kwargs)

@@ -134,7 +134,7 @@ def plot_boxplot_to_file(results_directory, optimizer, objectivefunc, classifier
 
                     logging.debug(data)
 
-                    plt.xticks(rotation=45)
+                    plt.xticks(ha='right', rotation=45)
 
                     box = plt.boxplot(data, patch_artist=True, labels=classifiers)
 
