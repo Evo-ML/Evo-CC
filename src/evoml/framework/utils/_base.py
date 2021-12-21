@@ -240,7 +240,12 @@ def average_of_matrix(matrix):
     for value in np.ndenumerate(matrix.values):
         # row = ast.literal_eval(value[1])
         temp.append(ast.literal_eval(value[1]))
+    
+    logging.debug(temp)
 
-    avg = np.array(temp).astype(float).mean(axis=0)
+    if (type(temp[0][0]) is str):
+        avg = np.array(temp).astype(float).mean(axis=0)
+    else:
+        avg = np.array(temp).mean(axis=0)
 
     return avg.tolist()
