@@ -1,5 +1,5 @@
 <div align="center">
-<img alt="EvoCC-logo" src="evocc-logo" width=40%>
+<img alt="EvoCC-logo" src="https://raw.githubusercontent.com/Evo-ML/Evo-CC/main/evocc-logo.png" width=40%>
 </div>
 
 # EVO-CC: An Open-Source Classification-Based Nature-Inspired Optimization Clustering Framework in Python
