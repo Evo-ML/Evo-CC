@@ -9,6 +9,7 @@ from scipy.sparse import data
 from sklearn.model_selection import train_test_split
 import numpy as np
 from pathlib import Path
+import logging
 
 from .. import datasets
 
@@ -103,8 +104,11 @@ def get_data_home(data_home=None) -> str:
     """Return the path of the evoml-framework data dir.
     """
     if data_home is None:
-        data_home = environ.get('EVOML_FRAMEWORK_DATA',
-                                join('~', 'evoml_framework_data'))
+        # data_home = environ.get('EVOML_FRAMEWORK_DATA',
+        #                         join('~', 'evoml_framework_data'))
+        # print(datasets.__path__)
+        data_home = join(datasets.__path__[0],"data")
+        print(data_home)
     # update new path
     data_home = expanduser(data_home)
     makedirs(data_home, exist_ok=True)

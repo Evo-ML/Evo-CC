@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import logging
 import shutil
 from os import environ, listdir, makedirs, remove, rmdir
 import time
@@ -82,8 +83,9 @@ class EvoCC:
         )
 
         # run evocluster for each dataset
-        evo_cluster.run(path.join(Path(datasets.get_data_home()).parent, self.evo_folder),
-                        path.join(Path(datasets.get_data_home()).parent, self.evo_folder))
+        # evo_cluster.run(path.join(Path(datasets.get_data_home()).parent, self.evo_folder),
+        #                 path.join(Path(datasets.get_data_home()).parent, self.evo_folder))
+        evo_cluster.run(path.join(Path(datasets.get_data_home())), path.join(self.evo_folder))
 
     def _prepare_data_for_evo_cluster(self, dataset_list, evo_folder):
 
@@ -93,7 +95,9 @@ class EvoCC:
 
             # prepate to split
             dataset_file = path.join(datasets.get_data_home(), dataset + '.csv')
+            # print(evo_folder)
             folder_after_split = path.join(evo_folder, dataset)
+            # print(folder_after_split)
             folder_after_split_list.append(folder_after_split)
 
             # delete folder if it exists, then create new one
@@ -129,7 +133,7 @@ class EvoCC:
         final_results = []
 
         for num in range(0, self.num_of_runs):
-            print("Run no.: " + str(num))
+            print("Run no.: %s", str(num))
             # split datasets
             self.folder_after_split_list = self._prepare_data_for_evo_cluster(
                 self.dataset_list, self.evo_folder)
@@ -159,13 +163,13 @@ class EvoCC:
                     shutil.rmtree(dataset_folder)
                     remove(dataset_folder+".csv")
                 except OSError as e:
-                    print("Error: %s - %s." % (e.filename, e.strerror))
+                    logging.DEBUG("Error: %s - %s." % (e.filename, e.strerror))
             try:
                 remove(path.join(self.evo_folder, "experiment.csv"))
                 remove(path.join(self.evo_folder, "experiment_details_Labels.csv"))
                 remove(path.join(self.evo_folder, "experiment_details.csv"))
             except OSError as e:
-                print("Error: %s - %s." % (e.filename, e.strerror))
+                logging.DEBUG("Error: %s - %s." % (e.filename, e.strerror))
 
         utils.write_results_to_csv(final_results, self.evo_folder)
         ev_measures = ['g-mean', 'Accuracy']
